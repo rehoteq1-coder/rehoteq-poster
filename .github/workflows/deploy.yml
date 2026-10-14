@@ -14,13 +14,18 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm --prefix functions install
-      - run: npx --yes firebase-tools@13 deploy --only functions,firestore:rules --project rehoteq-field --non-interactive
+      - name: Deploy functions and rules
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD != '' }}
+        run: |
+          npm --prefix functions install
+          npx --yes firebase-tools@13 deploy --only functions,firestore:rules --project rehoteq-field --non-interactive
         env:
           FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD }}
+      - name: Deploy waits for its credential
+        if: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD == '' }}
+        run: echo "Skipping deploy. Add the FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD repository secret (Firebase service-account JSON) to enable CI deploys."
