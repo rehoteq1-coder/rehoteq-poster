@@ -44,5 +44,5 @@ test('firestore rules deny everything by default and scope pages/posts to the ow
 test('CI deploys gated on the service account secret', () => {
   const yml = fs.readFileSync(path.join(ROOT, '.github/workflows/deploy.yml'), 'utf8');
   assert.ok(yml.includes('node-version: 22'));
-  assert.ok(yml.includes("secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD != ''"));
+  assert.ok(yml.includes('[ -z "${FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD:-}" ]'));
 });
