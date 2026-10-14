@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>REHOTEQ Poster</title>
+<style>
+  :root { --primary:#0E7C5A; --primary-d:#0A5C42; --bg:#F1F5F4; --ink:#0F172A; --muted:#64748B; --line:#E2E8F0; --danger:#DC2626; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:560px; margin:0 auto; padding:20px 16px 40px; }
+  h1 { font-size:20px; margin:8px 0 2px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 18px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:12px; }
+  .btn { display:inline-block; background:var(--primary); color:#fff; border:0; border-radius:9px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn.secondary { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+  .btn:disabled { opacity:.5; cursor:default; }
+  textarea, select, input { width:100%; border:1px solid var(--line); border-radius:9px; padding:10px; font-size:14px; font-family:inherit; background:#fff; color:var(--ink); }
+  textarea { min-height:110px; resize:vertical; }
+  label { font-size:12px; color:var(--muted); font-weight:600; display:block; margin:10px 0 4px; }
+  .post { border-top:1px solid var(--line); padding:10px 0; font-size:13px; }
+  .post:first-child { border-top:0; }
+  .post .meta { color:var(--muted); font-size:11.5px; margin-top:2px; }
+  .post .cancel { float:right; color:var(--danger); background:none; border:0; cursor:pointer; font-size:12px; }
+  .msg { font-size:12.5px; margin:8px 0 0; }
+  .err { color:var(--danger); }
+  .ok { color:var(--primary-d); }
+  .hidden { display:none; }
+  #status { color:var(--muted); font-size:12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>REHOTEQ Poster</h1>
+  <p class="sub">Connect a Facebook Page, write a post, pick a time. That is the whole interface.</p>
+
+  <div class="card" id="signinCard">
+    <p style="font-size:13.5px;margin:0 0 10px">Sign in to schedule posts for your business pages.</p>
+    <button class="btn" id="signinBtn">Sign in with Google</button>
+  </div>
+
+  <div class="card hidden" id="mainCard">
+    <button class="btn secondary" id="connectBtn">Connect a Facebook Page</button>
+    <span id="status"></span>
+    <div id="pages" style="margin-top:10px"></div>
+    <div id="composer" class="hidden">
+      <label for="text">Post</label>
+      <textarea id="text" maxlength="5000" placeholder="What should go out?"></textarea>
+      <label for="when">When</label>
+      <input type="datetime-local" id="when">
+      <div style="margin-top:12px"><button class="btn" id="schedBtn">Schedule post</button></div>
+      <p class="msg" id="msg"></p>
+    </div>
+  </div>
+
+  <div class="card hidden" id="listCard">
+    <p style="font-size:13px;font-weight:600;margin:0 0 6px">Scheduled</p>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js';
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js';
+  import { getFunctions, httpsCallable } from 'https://www.gstatic.com/firebasejs/13.0.0/firebase-functions.js';
+
+  const app = initializeApp({
+    apiKey: 'AIzaSyApTJ1tHCUoaFfdPiq2j7j79qOOserw9vY',
+    authDomain: 'rehoteq-field.firebaseapp.com',
+    projectId: 'rehoteq-field',
+    appId: '1:1083351168714:web:049bc950acd50e6e492633',
+  });
+  const auth = getAuth(app);
+  const fns = getFunctions(app, 'us-central1');
+  const $ = (id) => document.getElementById(id);
+  let pages = [];
+
+  function err(m) { $('msg').textContent = m; $('msg').className = 'msg err'; }
+  function good(m) { $('msg').textContent = m; $('msg').className = 'msg ok'; }
+  function fmt(t) { return t ? new Date(t).toLocaleString() : 'unknown'; }
+
+// Page list and posts both come from callables, so the browser never reads tokens.
+  async function refresh() {
+    const posts = await httpsCallable(fns, 'listPosts')({});
+    renderList(posts.data);
+  }
+
+  function renderList(items) {
+    $('listCard').classList.toggle('hidden', !items.length);
+    $('list').innerHTML = items.map((p) => `
+      <div class="post">
+        ${p.status === 'cancelled' ? '' : `<button class="cancel" data-id="${p.id}">Cancel</button>`}
+        <div>${p.text.slice(0, 90)}${p.text.length > 90 ? '…' : ''}</div>
+        <div class="meta">${p.pageName || ''} · ${p.status === 'scheduled' ? 'goes out ' + fmt(p.scheduledAt) : p.status}</div>
+      </div>`).join('');
+    $('list').querySelectorAll('.cancel').forEach((b) => b.onclick = async () => {
+      await httpsCallable(fns, 'cancelPost')({ postId: b.dataset.id });
+      refresh();
+    });
+  }
+
+  async function loadPageList() {
+    const res = await httpsCallable(fns, 'fbStart')({ list: true });
+    pages = (res.data && res.data.pages) || [];
+    if (pages.length) {
+      $('pages').innerHTML = `<label for="pageSel">Page</label>
+        <select id="pageSel">${pages.map((p) => `<option value="${p.pageId}">${p.pageName}</option>`).join('')}</select>`;
+      $('composer').classList.remove('hidden');
+      $('status').textContent = `${pages.length} page${pages.length === 1 ? '' : 's'} connected`;
+    } else {
+      $('status').textContent = 'No pages connected yet.';
+    }
+  }
+
+  $('signinBtn').onclick = async () => {
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); } catch (e) { err(e.message); }
+  };
+  onAuthStateChanged(auth, async (u) => {
+    $('signinCard').classList.toggle('hidden', !!u);
+    $('mainCard').classList.toggle('hidden', !u);
+    if (!u) return;
+    try { await loadPageList(); await refresh(); } catch (e) { $('status').textContent = e.message; }
+  });
+
+  $('connectBtn').onclick = async () => {
+    try {
+      const res = await httpsCallable(fns, 'fbStart')({});
+      window.open(res.data.url, 'fbconnect', 'width=520,height=680');
+    } catch (e) { err(e.message); }
+  };
+
+  $('schedBtn').onclick = async () => {
+    const text = $('text').value.trim();
+    const when = new Date($('when').value).getTime();
+    const pageSel = document.getElementById('pageSel');
+    if (!text) return err('Write the post first.');
+    if (!when) return err('Pick a date and time.');
+    $('schedBtn').disabled = true;
+    try {
+      await httpsCallable(fns, 'schedulePost')({ pageId: pageSel.value, text, when });
+      $('text').value = '';
+      good('Scheduled. Facebook publishes it on its own.');
+      refresh();
+    } catch (e) { err(e.message); }
+    $('schedBtn').disabled = false;
+  };
+
+  // Returning from the Facebook window
+  const q = new URLSearchParams(location.search);
+  if (q.get('connected')) { good('Page connected.'); history.replaceState(null, '', location.pathname); }
+  if (q.get('error')) { err(q.get('error')); history.replaceState(null, '', location.pathname); }
+</script>
+</body>
+</html>

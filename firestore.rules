@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Connected page tokens: written only by the Admin SDK (functions), read
+    // only by the owner account. No client may ever see a token.
+    match /pages/{docId} {
+      allow read: if request.auth != null
+                  && resource.data.uid == request.auth.uid;
+      allow write: if false;
+    }
+    // Scheduled posts: each user sees only their own rows.
+    match /posts/{docId} {
+      allow read, update, delete: if request.auth != null
+                  && resource.data.uid == request.auth.uid;
+      allow create: if false; // created only server-side via schedulePost
+    }
+    // OAuth state lives server-side only.
+    match /oauthState/{docId} {
+      allow read, write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
