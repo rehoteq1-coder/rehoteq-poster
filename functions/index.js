@@ -1,4 +1,4 @@
-// REHOTEQ Poster: no-configuration social scheduling.
+// RehoFlow: no-configuration social scheduling.
 // MVP: Facebook Pages only (free, native scheduling via Graph API).
 // Design invariants:
 //   * Page tokens live in Firestore, written only by these functions with the
@@ -21,7 +21,7 @@ const FB_APP_SECRET = defineSecret('FB_APP_SECRET');
 
 const FB_VERSION = 'v21.0';
 const GRAPH = `https://graph.facebook.com/${FB_VERSION}`;
-const WEB_BASE = process.env.WEB_BASE || 'https://field.rehoteq.com/poster.html';
+const WEB_BASE = process.env.WEB_BASE || 'https://rehoflow.web.app/';
 // Facebook allows scheduling between 10 minutes and 75 days ahead.
 const MIN_SCHEDULE_SECS = 11 * 60;
 const MAX_SCHEDULE_SECS = 75 * 86400;

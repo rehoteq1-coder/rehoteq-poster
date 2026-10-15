@@ -36,7 +36,7 @@ test('firestore rules deny everything by default and scope pages/posts to the ow
   const rules = fs.readFileSync(path.join(ROOT, 'firestore.rules'), 'utf8');
   assert.ok(rules.includes('resource.data.uid == request.auth.uid'));
   assert.match(rules, /match \/\{document=\*\*\}\s*\{\s*allow read, write: if false;/);
-  const poster = fs.readFileSync(path.join(ROOT, 'web/poster.html'), 'utf8');
+  const poster = fs.readFileSync(path.join(ROOT, 'web/rehoflow.html'), 'utf8');
   assert.ok(poster.includes('noindex'));
   assert.ok(poster.includes('Sign in with Google') && poster.includes('schedulePost'));
 });

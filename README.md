@@ -1,4 +1,4 @@
-# REHOTEQ Poster
+# RehoFlow
 
 No-configuration social media scheduling. Connect a page, write a post, pick a
 time. Done.
@@ -13,7 +13,7 @@ is private-only until audited; X has no free posting tier).
 
 ## How it works
 
-- `web/poster.html` - the whole interface. Google sign-in, connect a page,
+- `web/rehoflow.html` - the whole interface. Google sign-in, connect a page,
   write, schedule, see and cancel scheduled posts.
 - `functions/` - Cloud Functions (Node 22, us-central1) on the `rehoteq-field`
   Firebase project:
@@ -40,5 +40,5 @@ is private-only until audited; X has no free posting tier).
    JSON) to this GitHub repo so CI can deploy.
 4. Push to `main`. CI runs the smoke tests, then deploys functions and rules.
 
-`web/poster.html` is served at `https://field.rehoteq.com/poster.html`
+`web/rehoflow.html` is served at its own Firebase Hosting domain (set by WEB_BASE, e.g. `https://rehoflow.web.app`)
 (noindex) by the rehoteq-field repo's normal deploy.
