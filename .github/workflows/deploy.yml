@@ -19,13 +19,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Deploy functions and rules (skipped until the service account secret is added)
+      - name: Deploy functions, rules and hosting
         run: |
           if [ -z "${FIREBASE_SERVICE_ACCOUNT_REHOFLOW:-}" ]; then
             echo "Skipping deploy. Add the FIREBASE_SERVICE_ACCOUNT_REHOFLOW repository secret (Firebase service-account JSON) to enable CI deploys."
             exit 0
           fi
+          echo "${FIREBASE_SERVICE_ACCOUNT_REHOFLOW}" > "$GITHUB_WORKSPACE/sa.json"
           npm --prefix functions install
-          npx --yes firebase-tools@13 deploy --only functions,firestore:rules --project rehoflow --non-interactive
+          GOOGLE_APPLICATION_CREDENTIALS="$GITHUB_WORKSPACE/sa.json" npx --yes firebase-tools@13 deploy --only functions,firestore:rules,hosting --project rehoflow --non-interactive
         env:
           FIREBASE_SERVICE_ACCOUNT_REHOFLOW: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOFLOW }}
