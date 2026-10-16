@@ -21,11 +21,11 @@ jobs:
           node-version: 22
       - name: Deploy functions and rules (skipped until the service account secret is added)
         run: |
-          if [ -z "${FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD:-}" ]; then
-            echo "Skipping deploy. Add the FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD repository secret (Firebase service-account JSON) to enable CI deploys."
+          if [ -z "${FIREBASE_SERVICE_ACCOUNT_REHOFLOW:-}" ]; then
+            echo "Skipping deploy. Add the FIREBASE_SERVICE_ACCOUNT_REHOFLOW repository secret (Firebase service-account JSON) to enable CI deploys."
             exit 0
           fi
           npm --prefix functions install
-          npx --yes firebase-tools@13 deploy --only functions,firestore:rules --project rehoteq-field --non-interactive
+          npx --yes firebase-tools@13 deploy --only functions,firestore:rules --project rehoflow --non-interactive
         env:
-          FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOTEQ_FIELD }}
+          FIREBASE_SERVICE_ACCOUNT_REHOFLOW: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_REHOFLOW }}
