@@ -26,7 +26,7 @@ const WEB_BASE = process.env.WEB_BASE || 'https://rehoflow.web.app/';
 const MIN_SCHEDULE_SECS = 11 * 60;
 const MAX_SCHEDULE_SECS = 75 * 86400;
 
-const CALLBACK_URL = 'https://us-central1-rehoteq-field.cloudfunctions.net/fbCallback';
+const CALLBACK_URL = 'https://us-central1-rehoflow.cloudfunctions.net/fbCallback';
 const SCOPES = ['pages_show_list', 'pages_manage_posts', 'pages_read_engagement'].join(',');
 
 // The OAuth state carries the Firebase uid of the signed-in user. It is signed
