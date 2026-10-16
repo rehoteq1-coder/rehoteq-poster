@@ -72,7 +72,7 @@ async function graphPost(path, params) {
 // Step 1 of connect: hand the signed-in user the Facebook Login dialog URL.
 // With { list: true } it instead returns the pages already connected to the
 // caller (id and name only; tokens never leave the server).
-exports.fbStart = onCall({ secrets: [FB_APP_SECRET], region: 'us-central1' }, async (req) => {
+exports.fbStart = onCall({ secrets: [FB_APP_ID, FB_APP_SECRET], region: 'us-central1' }, async (req) => {
   const uid = req.auth && req.auth.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in with Google first.');
   if (req.data && req.data.list) {
