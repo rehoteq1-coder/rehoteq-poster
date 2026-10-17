@@ -88,6 +88,7 @@ exports.fbStart = onCall({ secrets: [FB_APP_ID, FB_APP_SECRET], region: 'us-cent
     const url = new URL('https://www.facebook.com/' + FB_VERSION + '/dialog/oauth');
     url.searchParams.set('client_id', FB_APP_ID.value());
     url.searchParams.set('redirect_uri', CALLBACK_URL);
+    url.searchParams.set('response_type', 'code');
     url.searchParams.set('state', state);
     if (FB_CONFIG_ID) {
       url.searchParams.set('config_id', FB_CONFIG_ID);
