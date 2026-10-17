@@ -20,6 +20,7 @@ const FB_APP_ID = defineSecret('FB_APP_ID');
 const FB_APP_SECRET = defineSecret('FB_APP_SECRET');
 
 const FB_VERSION = 'v21.0';
+const FB_CONFIG_ID = '4490708751173899'; // Facebook Login for Business configuration
 const GRAPH = `https://graph.facebook.com/${FB_VERSION}`;
 const WEB_BASE = process.env.WEB_BASE || 'https://rehoflow.web.app/';
 // Facebook allows scheduling between 10 minutes and 75 days ahead.
@@ -88,7 +89,11 @@ exports.fbStart = onCall({ secrets: [FB_APP_ID, FB_APP_SECRET], region: 'us-cent
     url.searchParams.set('client_id', FB_APP_ID.value());
     url.searchParams.set('redirect_uri', CALLBACK_URL);
     url.searchParams.set('state', state);
-    url.searchParams.set('scope', SCOPES);
+    if (FB_CONFIG_ID) {
+      url.searchParams.set('config_id', FB_CONFIG_ID);
+    } else {
+      url.searchParams.set('scope', SCOPES);
+    }
     return { url: url.toString() };
   } catch (e) {
     throw new HttpsError('failed-precondition', 'The Facebook app is not configured yet. Set FB_APP_ID and FB_APP_SECRET.');
