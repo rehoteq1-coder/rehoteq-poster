@@ -120,6 +120,14 @@ exports.fbCallback = onRequest({ secrets: [FB_APP_ID, FB_APP_SECRET], region: 'u
       grant_type: 'fb_exchange_token', client_id: appId, client_secret: appSecret,
       fb_exchange_token: shortTok.access_token,
     });
+    // Diagnostic: record exactly which permissions the config granted this token.
+    let permsSnapshot = 'unknown';
+    try {
+      const permRes = await graphGet('/me/permissions', { access_token: longTok.access_token });
+      permsSnapshot = (permRes.data || []).map((x) => `${x.permission}:${x.status}`).join(', ') || 'none';
+    } catch (err) {
+      permsSnapshot = 'unavailable';
+    }
     const pages = await graphGet('/me/accounts', {
       access_token: longTok.access_token,
       fields: 'id,name,access_token,tasks',
@@ -129,6 +137,7 @@ exports.fbCallback = onRequest({ secrets: [FB_APP_ID, FB_APP_SECRET], region: 'u
       if (!Array.isArray(p.tasks) || !p.tasks.includes('CREATE_CONTENT')) continue;
       batch.set(db.doc(`pages/${uid}_${p.id}`), {
         uid, pageId: p.id, pageName: p.name, accessToken: p.access_token,
+        permsSnapshot,
         connectedAt: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }
@@ -174,7 +183,8 @@ exports.schedulePost = onCall({ region: 'us-central1' }, async (req) => {
     });
     return { ok: true, postId: ref.id, fbPostId: post.id || null };
   } catch (e) {
-    throw new HttpsError('unavailable', 'Facebook refused the post. ' + e.message);
+    throw new HttpsError('unavailable', 'Facebook refused the post. ' + e.message
+      + ' | Permissions this page token carries: ' + (page.permsSnapshot || 'unknown'));
   }
 });
 
